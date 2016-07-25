@@ -166,6 +166,9 @@ target_link_libraries(importance_sampling grasp_detector grasp_hypothesis ${catk
 target_link_libraries(test_cnn caffe_classifier cloud_camera hand_search handle_search learning plot ${PCL_LIBRARIES})
 
 
+add_dependencies(cloud_camera ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(grasp_hypothesis ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
 #############
 ## Install ##
 #############
