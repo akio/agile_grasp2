@@ -55,9 +55,9 @@
 /** GraspHypothesis class
  *
  * \brief Grasp hypothesis data structure
- * 
+ *
  * This class stores a single grasp hypothesis.
- * 
+ *
 */
 class GraspHypothesis
 {
@@ -108,7 +108,7 @@ public:
 	 * \brief Print a description of the grasp hypothesis to the systen's standard output.
 	*/
 	void print();
-	
+
 	/**
 	 * \brief Return the approach vector of the grasp.
 	 * \return 3x1 grasp approach vector
@@ -117,7 +117,7 @@ public:
 	{
 		return approach_;
 	}
-	
+
 	/**
 	 * \brief Return the hand axis of the grasp.
 	 * \return 3x1 hand axis
@@ -126,7 +126,7 @@ public:
 	{
 		return axis_;
 	}
-	
+
 	/**
 	 * \brief Return the binormal of the grasp.
 	 * \return 3x1 binormal
@@ -135,7 +135,7 @@ public:
 	{
 		return binormal_;
 	}
-	
+
 	/**
 	 * \brief Return whether the grasp is antipodal.
 	 * \return true if the grasp is antipodal, false otherwise
@@ -144,7 +144,7 @@ public:
 	{
 		return full_antipodal_;
 	}
-	
+
 	/**
 	 * \brief Return the the centered grasp position at the base of the robot hand.
 	 * \return 3x1 grasp position at the base of the robot hand
@@ -162,7 +162,7 @@ public:
 	{
 		return grasp_surface_;
 	}
-	
+
 	/**
 	 * \brief Return the width of the object contained in the grasp.
 	 * \return the width of the object contained in the grasp
@@ -171,7 +171,7 @@ public:
 	{
 		return grasp_width_;
 	}
-	
+
 	/**
 	 * \brief Return whether the grasp is indeterminate.
 	 * \return true if the grasp is indeterminate, false otherwise
@@ -180,7 +180,7 @@ public:
 	{
 		return half_antipodal_;
 	}
-	
+
 	/**
 	 * \brief Return the points used for training/prediction by the SVM.
 	 * \return the list of points used for training/prediction by the SVM
@@ -189,7 +189,7 @@ public:
 	{
 		return indices_points_for_learning_cam1_;
 	}
-	
+
 	/**
 	 * \brief Return the points used for training/prediction by the SVM that belong to camera #1.
 	 * \return the list of points used for training/prediction by the SVM that belong to camera #1
@@ -198,7 +198,7 @@ public:
 	{
 		return indices_points_for_learning_cam2_;
 	}
-	
+
 	/**
 	 * \brief Return the points used for training/prediction by the SVM that belong to camera #2.
 	 * \return the list of points used for training/prediction by the SVM that belong to camera #2
@@ -207,7 +207,7 @@ public:
 	{
 		return points_for_learning_;
 	}
-	
+
 	/**
    * \brief Return the normals used for training/prediction by the SVM that belong to camera #2.
    * \return the list of normals used for training/prediction by the SVM that belong to camera #2
@@ -234,7 +234,7 @@ public:
 	{
 		full_antipodal_ = b;
 	}
-	
+
 	/**
 	 * \brief Set whether the grasp is indeterminate.
 	 * \param b whether the grasp is indeterminate
@@ -243,7 +243,7 @@ public:
 	{
 		half_antipodal_ = b;
 	}
-	
+
 	/**
 	 * \brief Set the width of the object contained in the grasp.
 	 * \param w the width of the object contained in the grasp

@@ -1,12 +1,29 @@
 <launch>
-    <arg name="cloud_topic" default="/cloud_sized_base" />
+    <include file="$(find fetch_gazebo)/launch/pickplace_playground.launch" />
 
-    <node name="detect_grasps" pkg="agile_grasp2" type="detect_grasps" output="screen">
+    <include file="$(find fetch_moveit_config)/launch/moveit_rviz.launch" />
+
+    <!--
+    <node name="rviz" type="rviz" pkg="rviz" />
+    -->
+    <!--
+    <include file="$(find fetch_arm_control)/launch/arm_interaction_backend.launch" />
+    -->
+
+    <!--
+    <include file="$(find agile_grasp2)/launch/robot_detect_grasps.launch">
+        <arg name="cloud_topic" value="" />
+    </include>
+    <arg name="cloud_topic" default="/cloud_sized_base" />
+    -->
+
+    <node name="detect_grasps" pkg="agile_grasp2" type="detect_grasps" output="screen"
+        launch-prefix="gdb --ex run --args">
         <!-- Input Point Cloud -->
         <!-- 0: *.pcd file, 1: sensor_msgs/PointCloud2, 2: agile_grasp2/CloudSized, 3: agile_grasp2/CloudIndexed -->
         <param name="cloud_type" value="1" />
         <param name="use_service" value="false" />
-        <param name="cloud_topic" value="$(arg cloud_topic)" />
+        <param name="cloud_topic" value="/head_camera/depth_registered/points" />
         <param name="plot_mode" value="0" /> <!-- 0: none, 1: PCL, 2: rviz -->
         <param name="only_plot_output" value="false" />
         <param name="save_hypotheses" value="false" />
@@ -79,4 +96,11 @@
         -->
         <param name="gripper_width_range" value="[0.03, 0.20]" />
     </node>
+
+    <node name="pick" type="pick.py" pkg="fetch_picking" />
+
+    <!-- Start MoveIt -->
+    <include file="$(find fetch_moveit_config)/launch/move_group.launch" >
+        <arg name="info" value="true"/><!-- publish grasp markers -->
+    </include>
 </launch>

@@ -1,8 +1,12 @@
 #include <agile_grasp2/hand_search.h>
 
 
-std::vector<GraspHypothesis> HandSearch::generateHypotheses(const CloudCamera& cloud_cam, int antipodal_mode,
-  bool use_samples, bool forces_PSD, bool plots_normals, bool plots_samples)
+std::vector<GraspHypothesis> HandSearch::generateHypotheses(const CloudCamera& cloud_cam,
+                                                            int antipodal_mode,
+                                                            bool use_samples,
+                                                            bool forces_PSD,
+                                                            bool plots_normals,
+                                                            bool plots_samples)
 {
   double t0_total = omp_get_wtime();
 
@@ -44,16 +48,23 @@ std::vector<GraspHypothesis> HandSearch::generateHypotheses(const CloudCamera& c
   // 2. Estimate local reference frames.
   std::cout << "Estimating local reference frames ...\n";
   std::vector<LocalFrame> frames;
-  if (use_samples)
-    frames = calculateLocalFrames(cloud_cam, cloud_cam.getSamples(), nn_radius_taubin_, kdtree);
-  else
-    frames = calculateLocalFrames(cloud_cam, cloud_cam.getSampleIndices(), nn_radius_taubin_, kdtree);
+  if (use_samples) {
+    frames = calculateLocalFrames(cloud_cam, cloud_cam.getSamples(),
+                                  nn_radius_taubin_, kdtree);
+  } else {
+    frames = calculateLocalFrames(cloud_cam, cloud_cam.getSampleIndices(),
+                                  nn_radius_taubin_, kdtree);
+  }
+
   if (plots_local_axes_)
     plot_.plotLocalAxes(frames, cloud_cam.getCloudOriginal());
 
   // 3. Generate grasp hypotheses.
   std::cout << "Finding hand poses ...\n";
-  std::vector<GraspHypothesis> hypotheses = evaluateHands(cloud_cam, frames, nn_radius_hands_, kdtree);
+  std::vector<GraspHypothesis> hypotheses = evaluateHands(cloud_cam,
+                                                          frames,
+                                                          nn_radius_hands_,
+                                                          kdtree);
 
   std::cout << "====> HAND SEARCH TIME: " << omp_get_wtime() - t0_total << std::endl;
 
@@ -95,7 +106,9 @@ void HandSearch::calculateNormalsOMP(const CloudCamera& cloud_cam)
 
 
 std::vector<LocalFrame> HandSearch::calculateLocalFrames(const CloudCamera& cloud_cam,
-  const std::vector<int>& indices, double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree)
+                                                         const std::vector<int>& indices,
+                                                         double radius,
+                                                         const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree)
 {
   const int MIN_NEIGHBORS = 20;
 
@@ -112,9 +125,10 @@ std::vector<LocalFrame> HandSearch::calculateLocalFrames(const CloudCamera& clou
   const PointCloudRGB::Ptr& cloud = cloud_cam.getCloudProcessed();
   const Eigen::MatrixXi& camera_source = cloud_cam.getCameraSource();
 
-#ifdef _OPENMP // parallelization using OpenMP
-#pragma omp parallel for private(nn_indices, nn_dists, nn_normals) num_threads(num_threads_)
-#endif
+  ROS_INFO_STREAM("INDICES: " << indices.size());
+//#ifdef _OPENMP // parallelization using OpenMP
+//#pragma omp parallel for private(nn_indices, nn_dists, nn_normals) num_threads(num_threads_)
+//#endif
   for (int i = 0; i < indices.size(); i++)
   {
     const pcl::PointXYZRGBA& sample = cloud->points[indices[i]];
@@ -235,8 +249,10 @@ std::vector<GraspHypothesis> HandSearch::evaluateHands(const CloudCamera& cloud_
 }
 
 
-std::vector<LocalFrame> HandSearch::calculateLocalFrames(const CloudCamera& cloud_cam, const Eigen::Matrix3Xd& samples,
-  double radius, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree)
+std::vector<LocalFrame> HandSearch::calculateLocalFrames(const CloudCamera& cloud_cam,
+                                                         const Eigen::Matrix3Xd& samples,
+                                                         double radius,
+                                                         const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree)
 {
   const int MIN_NEIGHBORS = 20;
 
@@ -253,6 +269,7 @@ std::vector<LocalFrame> HandSearch::calculateLocalFrames(const CloudCamera& clou
     const PointCloudRGB::Ptr& cloud = cloud_cam.getCloudProcessed();
     const Eigen::MatrixXi& camera_source = cloud_cam.getCameraSource();
 
+    ROS_INFO_STREAM("samples.cols() = " << samples.cols());
 //  #ifdef _OPENMP // parallelization using OpenMP
 //  #pragma omp parallel for private(nn_indices, nn_dists, nn_normals) num_threads(num_threads_)
 //  #endif
@@ -316,8 +333,12 @@ std::vector<LocalFrame> HandSearch::calculateLocalFrames(const CloudCamera& clou
     return frames_out;
 }
 
-std::vector<GraspHypothesis> HandSearch::calculateHand(const Eigen::Matrix3Xd& points, const Eigen::Matrix3Xd& normals,
-  const Eigen::MatrixXi& cam_source, const LocalFrame& local_frame, const Eigen::VectorXd& angles)
+
+std::vector<GraspHypothesis> HandSearch::calculateHand(const Eigen::Matrix3Xd& points,
+                                                       const Eigen::Matrix3Xd& normals,
+                                                       const Eigen::MatrixXi& cam_source,
+                                                       const LocalFrame& local_frame,
+                                                       const Eigen::VectorXd& angles)
 {
   FingerHand finger_hand(finger_width_, hand_outer_diameter_, hand_depth_);
 

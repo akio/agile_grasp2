@@ -44,6 +44,8 @@
 
 // ROS
 #include <ros/ros.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 
 // project-specific
 #include <agile_grasp2/caffe_classifier.h>
@@ -63,8 +65,9 @@
  *
  * \brief Detect grasp poses in point clouds.
  *
- * This class detects grasps in a point cloud by first creating a large set of grasp hypotheses, and then
- * classifying each of them as a grasp or not. It also contains a function to preprocess the point cloud.
+ * This class detects grasps in a point cloud by first creating a large set of
+ * grasp hypotheses, and then classifying each of them as a grasp or not.
+ * It also contains a function to preprocess the point cloud.
  *
 */
 class GraspDetector
@@ -127,8 +130,11 @@ public:
 
 private:
 
-  std::vector<GraspHypothesis> pruneGraspsOnHandParameters(const std::vector<GraspHypothesis>& hands, float min_x,
-      float max_x, float min_y, float max_y, float min_z);
+  std::vector<GraspHypothesis> pruneGraspsOnHandParameters(
+      const std::vector<GraspHypothesis>& hands,
+      float min_x, float max_x,
+      float min_y, float max_y,
+      float min_z);
 
   Classifier* classifier_;
   Learning* learning_;
@@ -153,6 +159,10 @@ private:
   double min_aperture_, max_aperture_;
   double outer_diameter_;
   std::vector<int> indices_;
+
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+  tf2_ros::TransformBroadcaster tf_broadcaster_;
 
   /** constants for antipodal mode */
   static const int NONE; ///< no prediction/calculation of antipodal grasps, uses grasp hypotheses

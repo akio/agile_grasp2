@@ -1,4 +1,5 @@
 #include <agile_grasp2/grasp_detector.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 
 /** constants for antipodal mode */
@@ -12,7 +13,11 @@ const int GraspDetector::PCL = 1; ///< everything is plotted in pcl-visualizer
 const int GraspDetector::RVIZ = 2; ///< everything is plotted in rviz
 
 
-GraspDetector::GraspDetector(ros::NodeHandle& node) : use_incoming_samples_(false), voxel_size_(0.003)
+GraspDetector::GraspDetector(ros::NodeHandle& node)
+  : use_incoming_samples_(false),
+    voxel_size_(0.003),
+    tf_buffer_(),
+    tf_listener_(tf_buffer_)
 {
   // read hand search parameters
   HandSearch::Parameters params;
@@ -120,7 +125,6 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
                -0.3501, -0.0002, 0.9367, 0.0554,
                0, 0, 0, 1;
 
-
     cam_tf_left = base_tf * sqrt_tf.inverse();
     cam_tf_right = base_tf * sqrt_tf;
     hand_search_.setCamTfLeft(cam_tf_left);
@@ -136,9 +140,97 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
     hand_search_.setCamTfLeft(cam_tf_left);
   }
 
+  /*
+  try {
+    geometry_msgs::TransformStamped transform = tf_buffer_.lookupTransform(
+        "head_camera_rgb_optical_frame",
+        "base_link",
+        ros::Time());
+    Eigen::Affine3d cam_to_left = tf2::transformToEigen(transform);
+    hand_search_.setCamTfLeft(cam_to_left.matrix());
+  } catch (tf2::TransformException& ex) {
+    ROS_WARN("%s", ex.what());
+  }
+  */
+
+  geometry_msgs::TransformStamped t;
+  t.header.stamp = ros::Time::now();
+  t.header.frame_id = "base_link";
+  t.child_frame_id = "cam_tf_left";
+  t.transform = tf2::eigenToTransform(Eigen::Affine3d(cam_tf_left)).transform;
+  tf_broadcaster_.sendTransform(t);
+
+
+  {
+    double min_x = workspace_[0];
+    double max_x = workspace_[1];
+    double min_y = workspace_[2];
+    double max_y = workspace_[3];
+    double min_z = workspace_[4];
+    double max_z = workspace_[5];
+    geometry_msgs::TransformStamped t;
+    t.header.stamp = ros::Time::now();
+    //t.header.frame_id = "head_camera_rgb_optical_frame";
+    t.header.frame_id = "base_link";
+    t.child_frame_id = "min_x_min_y_min_z";
+    t.transform.translation.x = min_x;
+    t.transform.translation.y = min_y;
+    t.transform.translation.z = min_z;
+    t.transform.rotation.x = 0;
+    t.transform.rotation.y = 0;
+    t.transform.rotation.z = 0;
+    t.transform.rotation.w = 1;
+    tf_broadcaster_.sendTransform(t);
+
+    t.child_frame_id = "min_x_min_y_max_z";
+    t.transform.translation.x = min_x;
+    t.transform.translation.y = min_y;
+    t.transform.translation.z = max_z;
+    tf_broadcaster_.sendTransform(t);
+
+    t.child_frame_id = "min_x_max_y_min_z";
+    t.transform.translation.x = min_x;
+    t.transform.translation.y = max_y;
+    t.transform.translation.z = min_z;
+    tf_broadcaster_.sendTransform(t);
+
+    t.child_frame_id = "min_x_max_y_max_z";
+    t.transform.translation.x = min_x;
+    t.transform.translation.y = max_y;
+    t.transform.translation.z = max_z;
+    tf_broadcaster_.sendTransform(t);
+
+    t.child_frame_id = "max_x_min_y_min_z";
+    t.transform.translation.x = max_x;
+    t.transform.translation.y = min_y;
+    t.transform.translation.z = min_z;
+    tf_broadcaster_.sendTransform(t);
+
+    t.child_frame_id = "max_x_min_y_max_z";
+    t.transform.translation.x = max_x;
+    t.transform.translation.y = min_y;
+    t.transform.translation.z = max_z;
+    tf_broadcaster_.sendTransform(t);
+
+    t.child_frame_id = "max_x_max_y_min_z";
+    t.transform.translation.x = max_x;
+    t.transform.translation.y = max_y;
+    t.transform.translation.z = min_z;
+    tf_broadcaster_.sendTransform(t);
+
+    t.child_frame_id = "max_x_max_y_max_z";
+    t.transform.translation.x = max_x;
+    t.transform.translation.y = max_y;
+    t.transform.translation.z = max_z;
+    tf_broadcaster_.sendTransform(t);
+  }
+
 
   // 1. Generate grasp hypotheses.
-  std::vector<GraspHypothesis> hands = hand_search_.generateHypotheses(cloud_cam, 0, use_incoming_samples_);
+  ROS_INFO_STREAM("STEP 1");
+  std::vector<GraspHypothesis> hands = hand_search_.generateHypotheses(cloud_cam,
+                                                                       0,
+                                                                       use_incoming_samples_);
   ROS_INFO_STREAM("# grasp hypotheses: " << hands.size());
   if (!only_plot_output_ && plot_mode_ == PCL)
   {
@@ -146,12 +238,18 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
   }
 
   // 2. Prune on aperture and fingers below table surface.
+  ROS_INFO_STREAM("STEP 2");
   std::vector<GraspHypothesis> hands_filtered;
   if (indices_.size() == 0)
   {
     Eigen::Vector4f min_bound, max_bound;
     pcl::getMinMax3D(*cloud_cam.getCloudProcessed(), min_bound, max_bound);
-    hands_filtered = pruneGraspsOnHandParameters(hands, workspace_[0], workspace_[1], workspace_[2], workspace_[3], min_bound(2));
+    hands_filtered = pruneGraspsOnHandParameters(hands,
+                                                 workspace_[0],
+                                                 workspace_[1],
+                                                 workspace_[2],
+                                                 workspace_[3],
+                                                 min_bound(2));
     ROS_INFO_STREAM("# grasps within gripper width range and workspace: " << hands_filtered.size());
   }
   else
@@ -166,6 +264,7 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
   }
 
   // 3. Predict or extract antipodal grasps (or do nothing).
+  ROS_INFO_STREAM("STEP 3");
   std::vector<GraspHypothesis> antipodal_hands;
   if (antipodal_mode_ == NONE)
   {
@@ -185,6 +284,7 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
     double t0_prediction = omp_get_wtime();
     int num_iterations = (int) ceil(image_list.size() / (double) batch_size_);
     std::cout << "num_iterations: " << num_iterations << "\n";
+
     for (int i = 0; i < num_iterations; i++)
     {
       std::vector<cv::Mat>::iterator end_it;
@@ -226,6 +326,7 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
   }
 
   // 4. Find grasp clusters.
+  ROS_INFO_STREAM("STEP 4");
   if (clusters_grasps && handle_search_.getMinInliers() > 0)
   {
     antipodal_hands = handle_search_.findClusters(antipodal_hands);
@@ -236,6 +337,7 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
   }
 
   // 5. Select the <num_selected_> highest ranking grasps.
+  ROS_INFO_STREAM("STEP 5");
   std::vector<GraspHypothesis> hands_selected;
   if (antipodal_hands.size() > num_selected_)
   {
@@ -284,6 +386,7 @@ std::vector<GraspHypothesis> GraspDetector::detectGraspPoses(const CloudCamera& 
 
 void GraspDetector::preprocessPointCloud(CloudCamera& cloud_cam)
 {
+  ROS_INFO("PREPROCESS POINTCLOUD");
   std::cout << "Processing cloud with: " << cloud_cam.getCloudOriginal()->size() << " points.\n";
 
   if (indices_.size() == 0)
@@ -304,6 +407,7 @@ void GraspDetector::preprocessPointCloud(CloudCamera& cloud_cam)
     // 3. Subsampling
     if (use_incoming_samples_)
     {
+      ROS_INFO("USE subsampleSamples");
       // remove samples outside of the workspace
       agile_grasp2::SamplesMsg filtered_samples_msg;
       for (int i = 0; i < samples_msg_.samples.size(); ++i)
@@ -320,6 +424,7 @@ void GraspDetector::preprocessPointCloud(CloudCamera& cloud_cam)
     }
     else if (num_samples_ > cloud_cam.getCloudProcessed()->size())
     {
+      ROS_INFO("USE setSampleIndices");
       std::vector<int> indices_all(cloud_cam.getCloudProcessed()->size());
       for (int i=0; i < cloud_cam.getCloudProcessed()->size(); i++)
         indices_all[i] = i;
@@ -329,6 +434,7 @@ void GraspDetector::preprocessPointCloud(CloudCamera& cloud_cam)
     }
     else
     {
+      ROS_INFO("USE subsampleUniformly");
       cloud_cam.subsampleUniformly(num_samples_);
       std::cout << "Subsampled " <<  num_samples_ << " at random uniformly.\n";
     }
@@ -360,8 +466,11 @@ void GraspDetector::setIndicesFromMsg(const agile_grasp2::CloudIndexed& msg)
 }
 
 
-std::vector<GraspHypothesis> GraspDetector::pruneGraspsOnHandParameters(const std::vector<GraspHypothesis>& hands,
-  float min_x, float max_x, float min_y, float max_y, float min_z)
+std::vector<GraspHypothesis> GraspDetector::pruneGraspsOnHandParameters(
+    const std::vector<GraspHypothesis>& hands,
+    float min_x, float max_x,
+    float min_y, float max_y,
+    float min_z)
 {
   std::vector<GraspHypothesis> hands_filtered(0);
 

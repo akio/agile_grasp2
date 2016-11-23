@@ -5,7 +5,7 @@ project(agile_grasp2)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS cmake_modules cv_bridge eigen_conversions geometry_msgs 
-message_generation pcl_conversions roscpp sensor_msgs std_msgs visualization_msgs)
+message_generation pcl_conversions roscpp sensor_msgs std_msgs visualization_msgs tf2_ros)
 
 ## System dependencies are found with CMake's conventions
 find_package(Eigen REQUIRED)

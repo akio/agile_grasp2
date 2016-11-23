@@ -41,15 +41,15 @@
 /** HandleSearch class
  *
  * \brief Handle data structure
- * 
- * This class stores a single handle. The handle represents (a) a list of grasp hypotheses that 
+ *
+ * This class stores a single handle. The handle represents (a) a list of grasp hypotheses that
  * are part of the handle, and (b) a grasp that is an "average" grasp over these grasp hypotheses.
- * 
+ *
 */
 class Handle : public GraspHypothesis
 {
 public:
-	
+
 	Handle() {};
 
   /**
@@ -69,7 +69,7 @@ public:
 	{
 		return hand_list_;
 	}
-	
+
 	/**
 	 * \brief Return the list of indices of grasp hypotheses that are part of the handle.
 	 * \return the list of indices of grasp hypotheses that are part of the handle
@@ -95,14 +95,14 @@ public:
   }
 
 private:
-	
+
   void setGraspVariablesMean();
 
 	/**
 	 * \brief Set the variables of the grasp.
 	*/
 	void setGraspVariables();
-	
+
 	/**
 	 * \brief Set the hand axis of the grasp.
 	*/
@@ -112,7 +112,7 @@ private:
 	 * \brief Set the distance along the handle's axis for each grasp hypothesis.
 	*/
 	void setDistAlongHandle();
-	
+
 	/**
 	 * \brief Set the width of the object contained in the handle grasp.
 	*/

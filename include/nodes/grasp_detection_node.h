@@ -41,6 +41,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <visualization_msgs/Marker.h>
 
 // PCL
 #include <pcl/common/common.h>
@@ -82,7 +83,7 @@ typedef pcl::PointCloud<pcl::PointNormal> PointCloudNormal;
 class GraspDetectionNode
 {
 public:
-  
+
   /**
    * \brief Constructor.
    * \param node the ROS node
@@ -154,7 +155,7 @@ private:
    * \param msg the incoming ROS message
   */
   void cloud_indexed_callback(const agile_grasp2::CloudIndexed& msg);
-  
+
   /**
    * \brief Callback function for the ROS topic that contains the input samples.
    * \param msg the incoming ROS message
@@ -199,6 +200,12 @@ private:
   static const int ALL_POINTS; ///< service uses all points in the cloud
   static const int RADIUS; ///< service uses all points within a radius given in the request
   static const int INDICES; ///< service uses all points which are contained in an index list given in the request
+
+  std::string camera_frame_id_;
+  ros::Publisher grasp_marker_pub_;
+  boost::scoped_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  double outer_diameter_;
+  double hand_depth_;
 };
 
 #endif /* GRASP_DETECTION_NODE_H_ */

@@ -31,6 +31,7 @@ CloudCamera::CloudCamera(const PointCloudNormal::Ptr& cloud, int size_left_cloud
 }
 
 
+// THIS USED
 CloudCamera::CloudCamera(const PointCloudRGB::Ptr& cloud, int size_left_cloud)
   : cloud_processed_(cloud), cloud_original_(cloud)
 {

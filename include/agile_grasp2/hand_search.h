@@ -56,11 +56,11 @@ typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloudRGBA;
 /** HandSearch class
  *
  * \brief Search for grasp hypotheses.
- * 
+ *
  * This class searches for grasp hypotheses in a point cloud by first calculating a local reference frame for a small
  * point neighborhood, and then finding geometrically feasible grasp hypotheses for a larger point neighborhood. It
  * can also estimate whether the grasp is antipodal from the normals of the point neighborhood.
- * 
+ *
 */
 class HandSearch
 {
@@ -89,7 +89,7 @@ class HandSearch
       double hand_height_; ///< the hand extends plus/minus this value along the hand axis
       double init_bite_; ///< the minimum object height
     };
-    
+
     HandSearch() : plots_camera_sources_(false), plots_local_axes_(false)
       { }
 
@@ -111,14 +111,20 @@ class HandSearch
 		 * \param num_threads the number of CPU threads to be used for the search
 		 * \param num_samples the number of samples drawn from the point cloud
 		*/
-    HandSearch(double finger_width, double hand_outer_diameter, double hand_depth, double hand_height, double init_bite,
-      int num_threads, int num_samples) : finger_width_(finger_width), hand_outer_diameter_(hand_outer_diameter), 
-      hand_depth_(hand_depth), hand_height_(hand_height), init_bite_(init_bite), num_threads_(num_threads), 
+    HandSearch(double finger_width, double hand_outer_diameter,
+               double hand_depth, double hand_height, double init_bite,
+               int num_threads, int num_samples) :
+      finger_width_(finger_width), hand_outer_diameter_(hand_outer_diameter),
+      hand_depth_(hand_depth), hand_height_(hand_height), init_bite_(init_bite), num_threads_(num_threads),
       num_samples_(num_samples), plots_samples_(false), plots_local_axes_(false), nn_radius_taubin_(0.03),
       nn_radius_hands_(0.08) { }
-    
-    std::vector<GraspHypothesis> generateHypotheses(const CloudCamera& cloud_cam, int antipodal_mode, bool use_samples,
-      bool forces_PSD = false, bool plots_normals = false, bool plots_samples = false);
+
+    std::vector<GraspHypothesis> generateHypotheses(const CloudCamera& cloud_cam,
+                                                    int antipodal_mode,
+                                                    bool use_samples,
+                                                    bool forces_PSD = false,
+                                                    bool plots_normals = false,
+                                                    bool plots_samples = false);
 
     void setParameters(const Parameters& params);
 
@@ -131,10 +137,10 @@ class HandSearch
     {
       cam_tf_right_ = cam_tf_right;
     }
-      
-  
+
+
   private:
-    
+
     void calculateNormals(const CloudCamera& cloud_cam, const pcl::KdTreeFLANN<pcl::PointXYZRGBA>& kdtree,
       bool plots_normals);
 
@@ -153,7 +159,7 @@ class HandSearch
       const Eigen::MatrixXi& cam_source, const LocalFrame& local_frame, const Eigen::VectorXd& angles);
 
     Eigen::Matrix4d cam_tf_left_, cam_tf_right_; ///< camera poses
-    
+
     /** hand geometry parameters */
     double finger_width_; ///< the finger width
     double hand_outer_diameter_; ///< the maximum robot hand aperture
@@ -168,14 +174,14 @@ class HandSearch
     double nn_radius_taubin_; ///< the radius for the neighborhood search for the quadratic surface fit
     double nn_radius_hands_; ///< the radius for the neighborhood search for the hand search
     int antipodal_method_; ///< the antipodal calculation method (see the constants below)
-    
+
     Eigen::Matrix3Xd cloud_normals_; ///< a 3xn matrix containing the normals for points in the point cloud
     Plot plot_; ///< plot object for visualization of search results
-    
+
     /** plotting parameters (optional, not read in from ROS launch file) **/
     bool plots_samples_; ///< are the samples drawn from the point cloud plotted?
     bool plots_camera_sources_; ///< is the camera source for each point in the point cloud plotted?
     bool plots_local_axes_; ///< are the local axes estimated for each point neighborhood plotted?
 };
 
-#endif /* HAND_SEARCH_H */ 
+#endif /* HAND_SEARCH_H */
